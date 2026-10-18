@@ -21,7 +21,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.Locale
 import kotlin.random.Random
-
+import com.example.evaluacion1.model.Comment
+import kotlinx.coroutines.flow.first
 enum class AppError {
     INVALID_CREDENTIALS,
     INACTIVE_USER,
@@ -383,4 +384,48 @@ class InMemoryTicketRepository(
         const val DESCRIPTION_MIN = 10
         const val NOTE_MIN = 5
     }
+}
+
+interface CommentRepository {
+    fun observeComments(ticketId: String): Flow<List<Comment>>
+    suspend fun addComment(actor: User, ticketId: String, text: String): AppResult<Unit>
+}
+
+class InMemoryCommentRepository(
+    private val tickets: TicketRepository,
+    private val clock: () -> Long = System::currentTimeMillis
+) : CommentRepository {
+
+    private val comments = MutableStateFlow<List<Comment>>(emptyList())
+    private val writeLock = Mutex()
+    private var nextId = 1L
+
+    override fun observeComments(ticketId: String): Flow<List<Comment>> =
+        comments.map { list -> list.filter { it.ticketId == ticketId }.sortedBy { it.createdAt } }
+
+    override suspend fun addComment(actor: User, ticketId: String, text: String): AppResult<Unit> {
+        val ticket = tickets.observeTicket(ticketId).first()
+            ?: return AppResult.Failure(AppError.NOT_FOUND)
+        if (!Permissions.canComment(actor, ticket)) return AppResult.Failure(AppError.PERMISSION_DENIED)
+        val trimmed = text.trim()
+        if (trimmed.length < COMMENT_MIN || trimmed.length > COMMENT_MAX) {
+            return AppResult.Failure(AppError.INVALID_INPUT)
+        }
+        writeLock.withLock {
+            val comment = Comment(nextId++, ticketId, actor.name, actor.email, trimmed, clock())
+            comments.update { it + comment }
+        }
+        return AppResult.Success(Unit)
+    }
+
+    private companion object {
+        const val COMMENT_MIN = 3
+        const val COMMENT_MAX = 500
+    }
+}
+
+object RepositoryProvider {
+    val auth: AuthRepository by lazy { InMemoryAuthRepository() }
+    val tickets: TicketRepository by lazy { InMemoryTicketRepository() }
+    val comments: CommentRepository by lazy { InMemoryCommentRepository(tickets) }
 }

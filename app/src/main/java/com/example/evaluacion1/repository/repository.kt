@@ -9,6 +9,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.security.MessageDigest
+import com.example.evaluacion1.model.Category
+import com.example.evaluacion1.model.HistoryEntry
+import com.example.evaluacion1.model.HistoryType
+import com.example.evaluacion1.model.NewTicketDraft
+import com.example.evaluacion1.model.Priority
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.util.Locale
+import kotlin.random.Random
 
 enum class AppError {
     INVALID_CREDENTIALS,

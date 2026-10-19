@@ -1,7 +1,5 @@
 package com.example.evaluacion1.repository
 
-ppackage com.example.evaluacion1.repository
-
 import com.example.evaluacion1.model.Category
 import com.example.evaluacion1.model.Comment
 import com.example.evaluacion1.model.HistoryEntry

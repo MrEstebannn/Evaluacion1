@@ -1,28 +1,31 @@
 package com.example.evaluacion1.repository
 
+ppackage com.example.evaluacion1.repository
+
+import com.example.evaluacion1.model.Category
+import com.example.evaluacion1.model.Comment
+import com.example.evaluacion1.model.HistoryEntry
+import com.example.evaluacion1.model.HistoryType
+import com.example.evaluacion1.model.NewTicketDraft
+import com.example.evaluacion1.model.Priority
 import com.example.evaluacion1.model.Role
 import com.example.evaluacion1.model.Ticket
 import com.example.evaluacion1.model.TicketStatus
 import com.example.evaluacion1.model.User
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.security.MessageDigest
-import com.example.evaluacion1.model.Category
-import com.example.evaluacion1.model.HistoryEntry
-import com.example.evaluacion1.model.HistoryType
-import com.example.evaluacion1.model.NewTicketDraft
-import com.example.evaluacion1.model.Priority
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import java.security.MessageDigest
 import java.util.Locale
 import kotlin.random.Random
-import com.example.evaluacion1.model.Comment
-import kotlinx.coroutines.flow.first
+
 enum class AppError {
     INVALID_CREDENTIALS,
     INACTIVE_USER,
@@ -118,6 +121,7 @@ object DemoAccounts {
 interface AuthRepository {
     val currentUser: StateFlow<User?>
     suspend fun login(email: String, password: String): AppResult<User>
+    suspend fun restore(email: String): User?
     fun logout()
 }
 
@@ -135,6 +139,13 @@ class InMemoryAuthRepository : AuthRepository {
         if (!account.user.active) return AppResult.Failure(AppError.INACTIVE_USER)
         _currentUser.value = account.user
         return AppResult.Success(account.user)
+    }
+
+    override suspend fun restore(email: String): User? {
+        val account = DemoAccounts.all.firstOrNull { it.user.email.equals(email.trim(), ignoreCase = true) }
+        val user = account?.user?.takeIf { it.active }
+        _currentUser.value = user
+        return user
     }
 
     override fun logout() {

@@ -36,6 +36,10 @@ class LoginViewModel(private val auth: AuthRepository) : ViewModel() {
         _state.update { it.copy(email = value, emailError = null, loginError = null) }
     }
 
+    fun onLoginHandled() {
+        _state.update { LoginUiState() }
+    }
+
     fun onPasswordChange(value: String) {
         _state.update { it.copy(password = value, passwordError = null, loginError = null) }
     }

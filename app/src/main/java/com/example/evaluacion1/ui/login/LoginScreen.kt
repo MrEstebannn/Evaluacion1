@@ -58,7 +58,10 @@ fun LoginScreen(
     var showPassword by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(state.loggedInUser) {
-        state.loggedInUser?.let(onLoggedIn)
+        state.loggedInUser?.let { user ->
+            onLoggedIn(user)
+            viewModel.onLoginHandled()
+        }
     }
 
     Scaffold { padding ->

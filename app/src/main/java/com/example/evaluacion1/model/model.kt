@@ -14,7 +14,6 @@ enum class TicketStatus {
     val isOpen: Boolean
         get() = this != RESOLVED && this != CLOSED
 
-    /** Workflow transitions allowed from this status. */
     fun nextStatuses(): List<TicketStatus> = when (this) {
         NEW -> listOf(ASSIGNED)
         ASSIGNED -> listOf(IN_PROGRESS, ON_HOLD)

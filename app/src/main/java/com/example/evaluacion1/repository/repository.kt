@@ -164,7 +164,7 @@ interface TicketRepository {
     suspend fun assignTicket(actor: User, ticketId: String, assigneeId: Long): AppResult<Unit>
 }
 
-private object DemoTickets {
+internal object DemoTickets {
     private const val HOUR = 3_600_000L
     private const val TICKET_COUNT = 24
 

@@ -35,7 +35,6 @@ sealed class Screen(val route: String) {
     }
 }
 
-/** Chooses between login and the main graph depending on the persisted session. */
 @Composable
 fun AppNavHost(
     sessionViewModel: SessionViewModel = viewModel(factory = SessionViewModel.Factory)

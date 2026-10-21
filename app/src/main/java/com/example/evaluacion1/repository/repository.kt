@@ -1,5 +1,6 @@
 package com.example.evaluacion1.repository
 
+import android.content.Context
 import com.example.evaluacion1.model.Category
 import com.example.evaluacion1.model.Comment
 import com.example.evaluacion1.model.HistoryEntry
@@ -10,6 +11,10 @@ import com.example.evaluacion1.model.Role
 import com.example.evaluacion1.model.Ticket
 import com.example.evaluacion1.model.TicketStatus
 import com.example.evaluacion1.model.User
+import com.example.evaluacion1.repository.local.AppDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.security.MessageDigest
@@ -434,7 +440,19 @@ class InMemoryCommentRepository(
 }
 
 object RepositoryProvider {
+    private lateinit var database: AppDatabase
+    private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val roomTickets: RoomTicketRepository by lazy { RoomTicketRepository(database) }
+
     val auth: AuthRepository by lazy { InMemoryAuthRepository() }
-    val tickets: TicketRepository by lazy { InMemoryTicketRepository() }
-    val comments: CommentRepository by lazy { InMemoryCommentRepository(tickets) }
+    val tickets: TicketRepository get() = roomTickets
+    val comments: CommentRepository by lazy { RoomCommentRepository(database, roomTickets) }
+
+    /** Called once from the Application class, before any screen uses the repositories. */
+    fun init(context: Context) {
+        if (::database.isInitialized) return
+        database = AppDatabase.create(context)
+        appScope.launch { roomTickets.seedIfEmpty() }
+    }
 }
